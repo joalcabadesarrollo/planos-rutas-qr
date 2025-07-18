@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Plano Habitación</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 20px; }
+  h1 { text-align: center; }
+  #plano {
+    border: 2px solid #444;
+    background: #f0f0f0;
+    display: block;
+    margin: 0 auto;
+  }
+  .habitacion {
+    fill: #ccc;
+    stroke: #333;
+    stroke-width: 2;
+  }
+  text {
+    font-size: 14px;
+    pointer-events: none;
+    user-select: none;
+  }
+</style>
+</head>
+<body>
+
+<h1 id="titulo">Plano Habitación</h1>
+<svg id="plano" width="900" height="400" viewBox="0 0 900 400" xmlns="http://www.w3.org/2000/svg"></svg>
+
+<script>
+  const svgNS = "http://www.w3.org/2000/svg";
+  const svg = document.getElementById('plano');
+  const titulo = document.getElementById('titulo');
+
+  // Obtener parámetro "hab" de la URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const habId = parseInt(urlParams.get('hab'));
+
+  if (!habId || habId < 1 || habId > 10) {
+    titulo.textContent = 'Habitación no válida';
+  } else {
+    titulo.textContent = `Plano para Habitación ${habId}`;
+  }
+
+  // Datos entrada
+  const entrada = { x: 10, y: 170, width: 60, height: 60 };
+  const entradaCenter = { x: entrada.x + entrada.width/2, y: entrada.y + entrada.height/2 };
+
+  // Definimos las habitaciones (2 filas de 5)
+  const habitaciones = [];
+  for(let i=1; i<=10; i++) {
+    const fila = i <= 5 ? 50 : 250;
+    const col = ((i-1) % 5) * 140 + 100;
+    habitaciones.push({ id: i, x: col, y: fila, width: 120, height: 120 });
+  }
+
+  function createText(x, y, content) {
+    const t = document.createElementNS(svgNS, 'text');
+    t.setAttribute('x', x);
+    t.setAttribute('y', y);
+    t.textContent = content;
+    t.setAttribute('fill', '#000');
+    t.setAttribute('font-weight', 'bold');
+    return t;
+  }
+
+  function crearLinea(x1,y1,x2,y2) {
+    const line = document.createElementNS(svgNS,'line');
+    line.setAttribute('x1', x1);
+    line.setAttribute('y1', y1);
+    line.setAttribute('x2', x2);
+    line.setAttribute('y2', y2);
+    line.setAttribute('stroke', '#007BFF');
+    line.setAttribute('stroke-width', '3');
+    return line;
+  }
+
+  if(habId && habId >=1 && habId <=10) {
+    // Dibujar entrada
+    const rectEntrada = document.createElementNS(svgNS, 'rect');
+    rectEntrada.setAttribute('x', entrada.x);
+    rectEntrada.setAttribute('y', entrada.y);
+    rectEntrada.setAttribute('width', entrada.width);
+    rectEntrada.setAttribute('height', entrada.height);
+    rectEntrada.setAttribute('fill', 'green');
+    svg.appendChild(rectEntrada);
+
+    const textoEntrada = document.createElementNS(svgNS, 'text');
+    textoEntrada.setAttribute('x', entrada.x + 10);
+    textoEntrada.setAttribute('y', entrada.y + 35);
+    textoEntrada.setAttribute('fill', 'white');
+    textoEntrada.setAttribute('font-weight', 'bold');
+    textoEntrada.textContent = 'Entrada';
+    svg.appendChild(textoEntrada);
+
+    // Dibujar todas las habitaciones
+    habitaciones.forEach(h => {
+      const rect = document.createElementNS(svgNS, 'rect');
+      rect.setAttribute('x', h.x);
+      rect.setAttribute('y', h.y);
+      rect.setAttribute('width', h.width);
+      rect.setAttribute('height', h.height);
+      rect.setAttribute('class', 'habitacion');
+      svg.appendChild(rect);
+
+      const texto = createText(h.x + 10, h.y + 20, `Habitación ${h.id}`);
+      svg.appendChild(texto);
+    });
+
+    // Solo la ruta de la habitación específica
+    const hab = habitaciones.find(h => h.id === habId);
+
+    // Puerta
+    let puerta = {};
+    if(hab.y < 150) {
+      puerta.x = hab.x;
+      puerta.y = hab.y + hab.height/2;
+    } else {
+      puerta.x = hab.x + hab.width;
+      puerta.y = hab.y + hab.height/2;
+    }
+
+    // Línea directa
+    const linea = crearLinea(entradaCenter.x, entradaCenter.y, puerta.x, puerta.y);
+    svg.appendChild(linea);
+  }
+</script>
+
+</body>
+</html>
