@@ -1,191 +1,99 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>10 Planos con Ruta Individual y QR con URL</title>
-<style>
-  body { font-family: Arial, sans-serif; margin: 20px; }
-  h1 { text-align: center; }
-  .plano-container {
-    margin-bottom: 50px;
-    border: 2px solid #444;
-    background: #f0f0f0;
-    width: 900px;
-    margin-left: auto;
-    margin-right: auto;
-  }
-  .plano-titulo {
-    text-align: center;
-    font-weight: bold;
-    padding: 8px 0;
-    background-color: #007BFF;
-    color: white;
-    font-size: 18px;
-  }
-  svg {
-    display: block;
-    margin: 0 auto;
-  }
-  .habitacion {
-    fill: #ccc;
-    stroke: #333;
-    stroke-width: 2;
-  }
-  text {
-    font-size: 14px;
-    pointer-events: none;
-    user-select: none;
-  }
-  .qr-image {
-    pointer-events: none;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Plano con QR por habitación</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    h1 { text-align: center; }
+    #planos-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; }
+    .plano-box { border: 2px solid #444; background: #f9f9f9; padding: 10px; text-align: center; width: 400px; }
+    svg { width: 100%; height: auto; }
+    .qr-image { pointer-events: none; margin-top: 10px; }
+  </style>
 </head>
 <body>
 
-<h1>10 Planos con Ruta Individual y QR con URL</h1>
-
-<div id="contenedor-planos"></div>
+<h1>Planos con Rutas y Códigos QR</h1>
+<div id="planos-container"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 <script>
+  const baseUrl = 'https://TU-USUARIO.github.io/TU-REPO/plano.html'; // 🔁 Reemplaza con tu URL real
+
+  const container = document.getElementById('planos-container');
   const svgNS = "http://www.w3.org/2000/svg";
 
-  // Cambia esta URL a la ubicación real de plano.html en tu servidor
-  const baseUrl = 'https://tusitio.com/plano.html';
-
-  // Datos entrada
-  const entrada = { x: 10, y: 170, width: 60, height: 60 };
-  const entradaCenter = { x: entrada.x + entrada.width/2, y: entrada.y + entrada.height/2 };
-
-  // Definimos las habitaciones (2 filas de 5)
-  const habitaciones = [];
-  for(let i=1; i<=10; i++) {
-    const fila = i <= 5 ? 50 : 250;
-    const col = ((i-1) % 5) * 140 + 100;
-    habitaciones.push({ id: i, x: col, y: fila, width: 120, height: 120 });
-  }
-
-  function createText(x, y, content) {
-    const t = document.createElementNS(svgNS, 'text');
-    t.setAttribute('x', x);
-    t.setAttribute('y', y);
-    t.textContent = content;
-    t.setAttribute('fill', '#000');
-    t.setAttribute('font-weight', 'bold');
-    return t;
-  }
-
-  function crearLinea(x1,y1,x2,y2) {
-    const line = document.createElementNS(svgNS,'line');
-    line.setAttribute('x1', x1);
-    line.setAttribute('y1', y1);
-    line.setAttribute('x2', x2);
-    line.setAttribute('y2', y2);
-    line.setAttribute('stroke', '#007BFF');
-    line.setAttribute('stroke-width', '3');
-    return line;
-  }
-
-  const contenedor = document.getElementById('contenedor-planos');
-
-  function crearPlanoParaHabitacion(idHabitacion) {
-    const contPlano = document.createElement('div');
-    contPlano.classList.add('plano-container');
-
-    const titulo = document.createElement('div');
-    titulo.classList.add('plano-titulo');
-    titulo.textContent = `Plano con Ruta a Habitación ${idHabitacion}`;
-    contPlano.appendChild(titulo);
-
+  for (let i = 1; i <= 10; i++) {
     const svg = document.createElementNS(svgNS, 'svg');
-    svg.setAttribute('width', '900');
-    svg.setAttribute('height', '400');
-    svg.setAttribute('viewBox', '0 0 900 400');
-    svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    svg.setAttribute('viewBox', '0 0 600 300');
 
     // Entrada
-    const rectEntrada = document.createElementNS(svgNS, 'rect');
-    rectEntrada.setAttribute('x', entrada.x);
-    rectEntrada.setAttribute('y', entrada.y);
-    rectEntrada.setAttribute('width', entrada.width);
-    rectEntrada.setAttribute('height', entrada.height);
-    rectEntrada.setAttribute('fill', 'green');
-    svg.appendChild(rectEntrada);
+    const entrada = document.createElementNS(svgNS, 'rect');
+    entrada.setAttribute('x', 20);
+    entrada.setAttribute('y', 120);
+    entrada.setAttribute('width', 60);
+    entrada.setAttribute('height', 60);
+    entrada.setAttribute('fill', 'green');
+    svg.appendChild(entrada);
 
-    const textoEntrada = document.createElementNS(svgNS, 'text');
-    textoEntrada.setAttribute('x', entrada.x + 10);
-    textoEntrada.setAttribute('y', entrada.y + 35);
-    textoEntrada.setAttribute('fill', 'white');
-    textoEntrada.setAttribute('font-weight', 'bold');
-    textoEntrada.textContent = 'Entrada';
-    svg.appendChild(textoEntrada);
+    const entradaTexto = document.createElementNS(svgNS, 'text');
+    entradaTexto.setAttribute('x', 25);
+    entradaTexto.setAttribute('y', 155);
+    entradaTexto.setAttribute('fill', 'white');
+    entradaTexto.setAttribute('font-weight', 'bold');
+    entradaTexto.textContent = 'Entrada';
+    svg.appendChild(entradaTexto);
 
-    const rutasGroup = document.createElementNS(svgNS, 'g');
-    rutasGroup.setAttribute('id', 'rutas');
-    svg.appendChild(rutasGroup);
+    // Habitación
+    const habX = 500;
+    const habY = i <= 5 ? 60 : 180;
 
-    const habitacionesGroup = document.createElementNS(svgNS, 'g');
-    habitacionesGroup.setAttribute('id', 'habitaciones');
-    svg.appendChild(habitacionesGroup);
+    const habitacion = document.createElementNS(svgNS, 'rect');
+    habitacion.setAttribute('x', habX);
+    habitacion.setAttribute('y', habY);
+    habitacion.setAttribute('width', 80);
+    habitacion.setAttribute('height', 60);
+    habitacion.setAttribute('fill', '#ccc');
+    habitacion.setAttribute('stroke', '#333');
+    habitacion.setAttribute('stroke-width', '2');
+    svg.appendChild(habitacion);
 
-    habitaciones.forEach(h => {
-      // Puerta
-      let puerta = {};
-      if(h.y < 150) {
-        puerta.x = h.x;
-        puerta.y = h.y + h.height/2;
-      } else {
-        puerta.x = h.x + h.width;
-        puerta.y = h.y + h.height/2;
-      }
+    const textoHab = document.createElementNS(svgNS, 'text');
+    textoHab.setAttribute('x', habX + 5);
+    textoHab.setAttribute('y', habY + 20);
+    textoHab.setAttribute('fill', '#000');
+    textoHab.setAttribute('font-weight', 'bold');
+    textoHab.textContent = `Habitación ${i}`;
+    svg.appendChild(textoHab);
 
-      // Dibujar habitación
-      const rect = document.createElementNS(svgNS, 'rect');
-      rect.setAttribute('x', h.x);
-      rect.setAttribute('y', h.y);
-      rect.setAttribute('width', h.width);
-      rect.setAttribute('height', h.height);
-      rect.setAttribute('class', 'habitacion');
-      habitacionesGroup.appendChild(rect);
+    // Línea desde entrada a habitación
+    const linea = document.createElementNS(svgNS, 'line');
+    linea.setAttribute('x1', 50);
+    linea.setAttribute('y1', 150);
+    linea.setAttribute('x2', habX + 40);
+    linea.setAttribute('y2', habY + 30);
+    linea.setAttribute('stroke', '#007BFF');
+    linea.setAttribute('stroke-width', '3');
+    svg.appendChild(linea);
 
-      const texto = createText(h.x + 10, h.y + 20, `Habitación ${h.id}`);
-      habitacionesGroup.appendChild(texto);
-
-      if(h.id === idHabitacion) {
-        // Línea directa ruta
-        const lineaDirecta = crearLinea(entradaCenter.x, entradaCenter.y, puerta.x, puerta.y);
-        rutasGroup.appendChild(lineaDirecta);
-
-        // QR con URL para plano específico
-        const urlPlano = `${baseUrl}?hab=${h.id}`;
-
-        const centro = { x: h.x + h.width/2, y: h.y + h.height/2 };
-
-        const canvas = document.createElement('canvas');
-        QRCode.toCanvas(canvas, urlPlano, { width: 80, margin: 1 }, function (error) {
-          if (error) console.error(error);
-
-          const img = document.createElementNS(svgNS, 'image');
-          img.setAttributeNS(null, 'width', 80);
-          img.setAttributeNS(null, 'height', 80);
-          img.setAttributeNS(null, 'x', centro.x - 40);
-          img.setAttributeNS(null, 'y', centro.y - 40);
-          img.setAttributeNS('http://www.w3.org/1999/xlink', 'href', canvas.toDataURL());
-          img.setAttribute('class', 'qr-image');
-          habitacionesGroup.appendChild(img);
-        });
-      }
+    // Crear QR con ruta
+    const rutaQR = `${baseUrl}?hab=${i}`;
+    const canvas = document.createElement('canvas');
+    QRCode.toCanvas(canvas, rutaQR, { width: 100, margin: 1 }, function (error) {
+      if (error) console.error(error);
+      const img = document.createElement('img');
+      img.classList.add('qr-image');
+      img.src = canvas.toDataURL();
+      planoBox.appendChild(img);
     });
 
-    contPlano.appendChild(svg);
-    return contPlano;
-  }
-
-  for(let i=1; i<=10; i++) {
-    const plano = crearPlanoParaHabitacion(i);
-    contenedor.appendChild(plano);
+    // Contenedor individual del plano + QR
+    const planoBox = document.createElement('div');
+    planoBox.className = 'plano-box';
+    planoBox.appendChild(svg);
+    container.appendChild(planoBox);
   }
 </script>
 
