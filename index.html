@@ -27,6 +27,7 @@
       box-shadow: 0 6px 15px rgba(0,123,255,0.2);
       background: #ffffff;
       overflow: hidden;
+      position: relative;
     }
 
     .plano-titulo {
@@ -38,9 +39,30 @@
       font-size: 1.5rem;
     }
 
+    .plano-botones {
+      text-align: center;
+      margin: 10px 0 20px 0;
+    }
+
+    .plano-botones button {
+      margin: 5px;
+      padding: 8px 14px;
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      background-color: #007BFF;
+      color: white;
+    }
+
+    .plano-botones button:hover {
+      background-color: #0056b3;
+    }
+
     svg {
       display: block;
-      margin: 20px auto 30px auto;
+      margin: 10px auto 0 auto;
       max-width: 100%;
       height: auto;
       background: #f7f9fc;
@@ -50,7 +72,6 @@
       fill: #e2e8f0;
       stroke: #3b82f6;
       stroke-width: 3;
-      cursor: default;
     }
 
     text {
@@ -58,6 +79,14 @@
       font-weight: 600;
       pointer-events: none;
       user-select: none;
+    }
+
+    .qr-border {
+      fill: white;
+      stroke: #007BFF;
+      stroke-width: 2;
+      rx: 6;
+      ry: 6;
     }
 
     .qr-image {
@@ -74,7 +103,7 @@
 <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 <script>
   const svgNS = "http://www.w3.org/2000/svg";
-  const baseUrl = 'https://joalcabadesarrollo.github.io/planos-rutas-qr/'; // 🔁 <-- ACTUALIZA ESTO
+  const baseUrl = 'https://joalcabadesarrollo.github.io/planos-rutas-qr/';
 
   const entrada = { x: 10, y: 170, width: 60, height: 60 };
   const entradaCenter = { x: entrada.x + entrada.width / 2, y: entrada.y + entrada.height / 2 };
@@ -93,7 +122,6 @@
     t.textContent = content;
     t.setAttribute('fill', options.fill || '#000');
     t.setAttribute('font-weight', options.fontWeight || 'bold');
-    if (options.className) t.setAttribute('class', options.className);
     if (options.anchor) t.setAttribute('text-anchor', options.anchor);
     return t;
   }
@@ -107,6 +135,25 @@
     line.setAttribute('stroke', '#007BFF');
     line.setAttribute('stroke-width', '3');
     return line;
+  }
+
+  function crearFlecha(x, y, direction) {
+    const arrow = document.createElementNS(svgNS, 'path');
+    const size = 10;
+    let d = '';
+    switch (direction) {
+      case 'right': d = `M${x - size},${y - size} L${x},${y} L${x - size},${y + size}`; break;
+      case 'left':  d = `M${x + size},${y - size} L${x},${y} L${x + size},${y + size}`; break;
+      case 'up':    d = `M${x - size},${y + size} L${x},${y} L${x + size},${y + size}`; break;
+      case 'down':  d = `M${x - size},${y - size} L${x},${y} L${x + size},${y - size}`; break;
+    }
+    arrow.setAttribute('d', d);
+    arrow.setAttribute('fill', 'none');
+    arrow.setAttribute('stroke', '#007BFF');
+    arrow.setAttribute('stroke-width', '3');
+    arrow.setAttribute('stroke-linecap', 'round');
+    arrow.setAttribute('stroke-linejoin', 'round');
+    return arrow;
   }
 
   const contenedor = document.getElementById('contenedor-planos');
@@ -134,7 +181,6 @@
     rectEntrada.setAttribute('fill', 'green');
     svg.appendChild(rectEntrada);
 
-    // Texto "Entrada" arriba del rectángulo, centrado
     const textoEntrada = createText(
       entrada.x + entrada.width / 2,
       entrada.y - 8,
@@ -167,25 +213,44 @@
       rect.setAttribute('class', 'habitacion');
       habitacionesGroup.appendChild(rect);
 
-      // Texto arriba del rectángulo
-      const texto = createText(h.x + h.width / 2, h.y - 5, `Habitación ${h.id}`, {
-        anchor: 'middle'
-      });
+      const texto = createText(
+        h.x + h.width / 2,
+        h.y - 5,
+        `Habitación ${h.id}`,
+        { anchor: 'middle' }
+      );
       habitacionesGroup.appendChild(texto);
 
       if (h.id === idHabitacion) {
-        // Ruta desde entrada desplazada 10px a la derecha para evitar el texto
         const tramo1 = crearLinea(entradaCenter.x + 10, entradaCenter.y, puerta.x, entradaCenter.y);
         const tramo2 = crearLinea(puerta.x, entradaCenter.y, puerta.x, puerta.y);
         rutasGroup.appendChild(tramo1);
         rutasGroup.appendChild(tramo2);
 
+        // Flecha
+        let direccionFlecha = 'right';
+        if (puerta.y < entradaCenter.y) direccionFlecha = 'up';
+        else if (puerta.y > entradaCenter.y) direccionFlecha = 'down';
+        else if (puerta.x < entradaCenter.x) direccionFlecha = 'left';
+
+        const flecha = crearFlecha(puerta.x, puerta.y, direccionFlecha);
+        rutasGroup.appendChild(flecha);
+
+        // QR
         const urlPlano = `${baseUrl}?hab=${h.id}`;
         const centro = { x: h.x + h.width / 2, y: h.y + h.height / 2 };
 
         const canvas = document.createElement('canvas');
         QRCode.toCanvas(canvas, urlPlano, { width: 80, margin: 1 }, function (error) {
           if (error) console.error(error);
+
+          const qrBorder = document.createElementNS(svgNS, 'rect');
+          qrBorder.setAttribute('x', centro.x - 42);
+          qrBorder.setAttribute('y', centro.y - 42);
+          qrBorder.setAttribute('width', 84);
+          qrBorder.setAttribute('height', 84);
+          qrBorder.setAttribute('class', 'qr-border');
+          habitacionesGroup.appendChild(qrBorder);
 
           const img = document.createElementNS(svgNS, 'image');
           img.setAttributeNS(null, 'width', 80);
@@ -200,9 +265,45 @@
     });
 
     contPlano.appendChild(svg);
+
+    // Botones
+    const botones = document.createElement('div');
+    botones.className = 'plano-botones';
+
+    const btnImprimir = document.createElement('button');
+    btnImprimir.textContent = '🖨️ Imprimir';
+    btnImprimir.onclick = () => {
+      const printWindow = window.open('', '', 'width=960,height=600');
+      printWindow.document.write('<html><head><title>Imprimir Plano</title>');
+      printWindow.document.write('<style>body{margin:0;}svg{width:100%;}</style>');
+      printWindow.document.write('</head><body>');
+      printWindow.document.write(svg.outerHTML);
+      printWindow.document.write('</body></html>');
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(() => printWindow.print(), 500);
+    };
+
+    const btnCompartir = document.createElement('button');
+    btnCompartir.textContent = '🔗 Compartir';
+    btnCompartir.onclick = async () => {
+      const url = `${baseUrl}?hab=${idHabitacion}`;
+      try {
+        await navigator.clipboard.writeText(url);
+        alert(`Enlace copiado al portapapeles:\n${url}`);
+      } catch (err) {
+        alert('No se pudo copiar el enlace. Inténtalo manualmente.');
+      }
+    };
+
+    botones.appendChild(btnImprimir);
+    botones.appendChild(btnCompartir);
+    contPlano.appendChild(botones);
+
     return contPlano;
   }
 
+  // Leer parámetro ?hab
   const params = new URLSearchParams(window.location.search);
   const habParam = parseInt(params.get('hab'), 10);
 
