@@ -3,46 +3,320 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Listado de Planos</title>
+  <title>Planos con Ruta Individual y QR con URL</title>
   <style>
     body {
-      font-family: sans-serif;
-      background: #f9f9f9;
-      text-align: center;
-      padding: 40px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 20px;
+      background: #f9fafb;
+      color: #333;
     }
+
     h1 {
-      color: #007BFF;
+      text-align: center;
+      font-weight: 700;
+      font-size: 2.2rem;
+      margin-bottom: 40px;
+      color: #222;
     }
-    .habitaciones {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 12px;
-      margin-top: 30px;
+
+    .plano-container {
+      margin: 0 auto 50px auto;
+      max-width: 900px;
+      border-radius: 10px;
+      box-shadow: 0 6px 15px rgba(0,123,255,0.2);
+      background: #ffffff;
+      overflow: hidden;
+      position: relative;
     }
-    a {
-      background: #007BFF;
-      color: white;
-      padding: 10px 18px;
-      text-decoration: none;
+
+    .plano-titulo {
+      text-align: center;
+      font-weight: 700;
+      padding: 15px 0;
+      background-color: #007BFF;
+      color: #fff;
+      font-size: 1.5rem;
+    }
+
+    .plano-botones {
+      text-align: center;
+      margin: 10px 0 20px 0;
+    }
+
+    .plano-botones button {
+      margin: 5px;
+      padding: 8px 14px;
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
       border-radius: 6px;
-      font-weight: bold;
+      cursor: pointer;
+      background-color: #007BFF;
+      color: white;
     }
-    a:hover {
-      background: #0056b3;
+
+    .plano-botones button:hover {
+      background-color: #0056b3;
+    }
+
+    svg {
+      display: block;
+      margin: 10px auto 0 auto;
+      max-width: 100%;
+      height: auto;
+      background: #f7f9fc;
+    }
+
+    .habitacion {
+      fill: #e2e8f0;
+      stroke: #3b82f6;
+      stroke-width: 3;
+    }
+
+    text {
+      font-size: 14px;
+      font-weight: 600;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .qr-border {
+      fill: white;
+      stroke: #007BFF;
+      stroke-width: 2;
+      rx: 6;
+      ry: 6;
+    }
+
+    .qr-image {
+      pointer-events: none;
     }
   </style>
 </head>
 <body>
-  <h1>Planos Disponibles</h1>
-  <div class="habitaciones">
-    <!-- Generar enlaces del 1 al 10 -->
-    <script>
-      for (let i = 1; i <= 10; i++) {
-        document.write(`<a href="plano.html?hab=${i}">Habitación ${i}</a>`);
+
+<h1>Planos con Ruta Individual y QR</h1>
+
+<div id="contenedor-planos"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+<script>
+  const svgNS = "http://www.w3.org/2000/svg";
+  const baseUrl = 'https://joalcabadesarrollo.github.io/planos-rutas-qr/';
+
+  const entrada = { x: 10, y: 170, width: 60, height: 60 };
+  const entradaCenter = { x: entrada.x + entrada.width / 2, y: entrada.y + entrada.height / 2 };
+
+  const habitaciones = [];
+  for (let i = 1; i <= 10; i++) {
+    const fila = i <= 5 ? 50 : 250;
+    const col = ((i - 1) % 5) * 140 + 100;
+    habitaciones.push({ id: i, x: col, y: fila, width: 120, height: 120 });
+  }
+
+  function createText(x, y, content, options = {}) {
+    const t = document.createElementNS(svgNS, 'text');
+    t.setAttribute('x', x);
+    t.setAttribute('y', y);
+    t.textContent = content;
+    t.setAttribute('fill', options.fill || '#000');
+    t.setAttribute('font-weight', options.fontWeight || 'bold');
+    if (options.anchor) t.setAttribute('text-anchor', options.anchor);
+    return t;
+  }
+
+  function crearLinea(x1, y1, x2, y2) {
+    const line = document.createElementNS(svgNS, 'line');
+    line.setAttribute('x1', x1);
+    line.setAttribute('y1', y1);
+    line.setAttribute('x2', x2);
+    line.setAttribute('y2', y2);
+    line.setAttribute('stroke', '#007BFF');
+    line.setAttribute('stroke-width', '3');
+    return line;
+  }
+
+  function crearFlecha(x, y, direction) {
+    const arrow = document.createElementNS(svgNS, 'path');
+    const size = 10;
+    let d = '';
+    switch (direction) {
+      case 'right': d = `M${x - size},${y - size} L${x},${y} L${x - size},${y + size}`; break;
+      case 'left':  d = `M${x + size},${y - size} L${x},${y} L${x + size},${y + size}`; break;
+      case 'up':    d = `M${x - size},${y + size} L${x},${y} L${x + size},${y + size}`; break;
+      case 'down':  d = `M${x - size},${y - size} L${x},${y} L${x + size},${y - size}`; break;
+    }
+    arrow.setAttribute('d', d);
+    arrow.setAttribute('fill', 'none');
+    arrow.setAttribute('stroke', '#007BFF');
+    arrow.setAttribute('stroke-width', '3');
+    arrow.setAttribute('stroke-linecap', 'round');
+    arrow.setAttribute('stroke-linejoin', 'round');
+    return arrow;
+  }
+
+  const contenedor = document.getElementById('contenedor-planos');
+
+  function crearPlanoParaHabitacion(idHabitacion) {
+    const contPlano = document.createElement('div');
+    contPlano.classList.add('plano-container');
+
+    const titulo = document.createElement('div');
+    titulo.classList.add('plano-titulo');
+    titulo.textContent = `Plano con Ruta a Habitación ${idHabitacion}`;
+    contPlano.appendChild(titulo);
+
+    const svg = document.createElementNS(svgNS, 'svg');
+    svg.setAttribute('width', '900');
+    svg.setAttribute('height', '400');
+    svg.setAttribute('viewBox', '0 0 900 400');
+
+    // Entrada
+    const rectEntrada = document.createElementNS(svgNS, 'rect');
+    rectEntrada.setAttribute('x', entrada.x);
+    rectEntrada.setAttribute('y', entrada.y);
+    rectEntrada.setAttribute('width', entrada.width);
+    rectEntrada.setAttribute('height', entrada.height);
+    rectEntrada.setAttribute('fill', 'green');
+    svg.appendChild(rectEntrada);
+
+    const textoEntrada = createText(
+      entrada.x + entrada.width / 2,
+      entrada.y - 8,
+      'Entrada',
+      { fill: 'green', fontWeight: 'bold', anchor: 'middle' }
+    );
+    svg.appendChild(textoEntrada);
+
+    const rutasGroup = document.createElementNS(svgNS, 'g');
+    svg.appendChild(rutasGroup);
+
+    const habitacionesGroup = document.createElementNS(svgNS, 'g');
+    svg.appendChild(habitacionesGroup);
+
+    habitaciones.forEach(h => {
+      let puerta = {};
+      if (h.y < 150) {
+        puerta.x = h.x;
+        puerta.y = h.y + h.height / 2;
+      } else {
+        puerta.x = h.x + h.width;
+        puerta.y = h.y + h.height / 2;
       }
-    </script>
-  </div>
+
+      const rect = document.createElementNS(svgNS, 'rect');
+      rect.setAttribute('x', h.x);
+      rect.setAttribute('y', h.y);
+      rect.setAttribute('width', h.width);
+      rect.setAttribute('height', h.height);
+      rect.setAttribute('class', 'habitacion');
+      habitacionesGroup.appendChild(rect);
+
+      const texto = createText(
+        h.x + h.width / 2,
+        h.y - 5,
+        `Habitación ${h.id}`,
+        { anchor: 'middle' }
+      );
+      habitacionesGroup.appendChild(texto);
+
+      if (h.id === idHabitacion) {
+        const tramo1 = crearLinea(entradaCenter.x + 10, entradaCenter.y, puerta.x, entradaCenter.y);
+        const tramo2 = crearLinea(puerta.x, entradaCenter.y, puerta.x, puerta.y);
+        rutasGroup.appendChild(tramo1);
+        rutasGroup.appendChild(tramo2);
+
+        // Flecha
+        let direccionFlecha = 'right';
+        if (puerta.y < entradaCenter.y) direccionFlecha = 'up';
+        else if (puerta.y > entradaCenter.y) direccionFlecha = 'down';
+        else if (puerta.x < entradaCenter.x) direccionFlecha = 'left';
+
+        const flecha = crearFlecha(puerta.x, puerta.y, direccionFlecha);
+        rutasGroup.appendChild(flecha);
+
+        // QR
+        const urlPlano = `${baseUrl}?hab=${h.id}`;
+        const centro = { x: h.x + h.width / 2, y: h.y + h.height / 2 };
+
+        const canvas = document.createElement('canvas');
+        QRCode.toCanvas(canvas, urlPlano, { width: 80, margin: 1 }, function (error) {
+          if (error) console.error(error);
+
+          const qrBorder = document.createElementNS(svgNS, 'rect');
+          qrBorder.setAttribute('x', centro.x - 42);
+          qrBorder.setAttribute('y', centro.y - 42);
+          qrBorder.setAttribute('width', 84);
+          qrBorder.setAttribute('height', 84);
+          qrBorder.setAttribute('class', 'qr-border');
+          habitacionesGroup.appendChild(qrBorder);
+
+          const img = document.createElementNS(svgNS, 'image');
+          img.setAttributeNS(null, 'width', 80);
+          img.setAttributeNS(null, 'height', 80);
+          img.setAttributeNS(null, 'x', centro.x - 40);
+          img.setAttributeNS(null, 'y', centro.y - 40);
+          img.setAttributeNS('http://www.w3.org/1999/xlink', 'href', canvas.toDataURL());
+          img.setAttribute('class', 'qr-image');
+          habitacionesGroup.appendChild(img);
+        });
+      }
+    });
+
+    contPlano.appendChild(svg);
+
+    // Botones
+    const botones = document.createElement('div');
+    botones.className = 'plano-botones';
+
+    const btnImprimir = document.createElement('button');
+    btnImprimir.textContent = '🖨️ Imprimir';
+    btnImprimir.onclick = () => {
+      const printWindow = window.open('', '', 'width=960,height=600');
+      printWindow.document.write('<html><head><title>Imprimir Plano</title>');
+      printWindow.document.write('<style>body{margin:0;}svg{width:100%;}</style>');
+      printWindow.document.write('</head><body>');
+      printWindow.document.write(svg.outerHTML);
+      printWindow.document.write('</body></html>');
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(() => printWindow.print(), 500);
+    };
+
+    const btnCompartir = document.createElement('button');
+    btnCompartir.textContent = '🔗 Compartir';
+    btnCompartir.onclick = async () => {
+      const url = `${baseUrl}?hab=${idHabitacion}`;
+      try {
+        await navigator.clipboard.writeText(url);
+        alert(`Enlace copiado al portapapeles:\n${url}`);
+      } catch (err) {
+        alert('No se pudo copiar el enlace. Inténtalo manualmente.');
+      }
+    };
+
+    botones.appendChild(btnImprimir);
+    botones.appendChild(btnCompartir);
+    contPlano.appendChild(botones);
+
+    return contPlano;
+  }
+
+  // Leer parámetro ?hab
+  const params = new URLSearchParams(window.location.search);
+  const habParam = parseInt(params.get('hab'), 10);
+
+  if (!isNaN(habParam) && habParam >= 1 && habParam <= 10) {
+    const plano = crearPlanoParaHabitacion(habParam);
+    contenedor.appendChild(plano);
+  } else {
+    for (let i = 1; i <= 10; i++) {
+      const plano = crearPlanoParaHabitacion(i);
+      contenedor.appendChild(plano);
+    }
+  }
+</script>
+
 </body>
 </html>
