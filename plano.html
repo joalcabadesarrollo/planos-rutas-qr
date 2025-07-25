@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Tu Ruta</title>
+  <title>Planos con Ruta y Usuario Animado</title>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -54,6 +54,7 @@
       cursor: pointer;
       background-color: #007BFF;
       color: white;
+      transition: background-color 0.3s ease;
     }
 
     .plano-botones button:hover {
@@ -68,7 +69,7 @@
       background: #f7f9fc;
     }
 
-    .Parqueadero {
+    .habitacion {
       fill: #e2e8f0;
       stroke: #3b82f6;
       stroke-width: 3;
@@ -92,11 +93,15 @@
     .qr-image {
       pointer-events: none;
     }
+
+    .usuario-animado {
+      transform: translate(-12px, -12px);
+    }
   </style>
 </head>
 <body>
 
-<h1>Tu Ruta</h1>
+<h1>Planos con Ruta y Usuario Animado</h1>
 
 <div id="contenedor-planos"></div>
 
@@ -108,11 +113,11 @@
   const entrada = { x: 10, y: 170, width: 60, height: 60 };
   const entradaCenter = { x: entrada.x + entrada.width / 2, y: entrada.y + entrada.height / 2 };
 
-  const Parqueaderoes = [];
+  const habitaciones = [];
   for (let i = 1; i <= 10; i++) {
     const fila = i <= 5 ? 50 : 250;
     const col = ((i - 1) % 5) * 140 + 100;
-    Parqueaderoes.push({ id: i, x: col, y: fila, width: 120, height: 120 });
+    habitaciones.push({ id: i, x: col, y: fila, width: 120, height: 120 });
   }
 
   function createText(x, y, content, options = {}) {
@@ -158,13 +163,13 @@
 
   const contenedor = document.getElementById('contenedor-planos');
 
-  function crearPlanoParaParqueadero(idParqueadero) {
+  function crearPlanoParaHabitacion(idHabitacion) {
     const contPlano = document.createElement('div');
     contPlano.classList.add('plano-container');
 
     const titulo = document.createElement('div');
     titulo.classList.add('plano-titulo');
-    titulo.textContent = `Plano Parqueadero ${idParqueadero}`;
+    titulo.textContent = `Plano con Ruta a Habitación ${idHabitacion}`;
     contPlano.appendChild(titulo);
 
     const svg = document.createElementNS(svgNS, 'svg');
@@ -189,13 +194,13 @@
     );
     svg.appendChild(textoEntrada);
 
+    const habitacionesGroup = document.createElementNS(svgNS, 'g');
+    svg.appendChild(habitacionesGroup);
+
     const rutasGroup = document.createElementNS(svgNS, 'g');
-    svg.appendChild(rutasGroup);
+    svg.appendChild(rutasGroup); // Ahora rutas y usuario quedan arriba
 
-    const ParqueaderoesGroup = document.createElementNS(svgNS, 'g');
-    svg.appendChild(ParqueaderoesGroup);
-
-    Parqueaderoes.forEach(h => {
+    habitaciones.forEach(h => {
       let puerta = {};
       if (h.y < 150) {
         puerta.x = h.x;
@@ -210,33 +215,52 @@
       rect.setAttribute('y', h.y);
       rect.setAttribute('width', h.width);
       rect.setAttribute('height', h.height);
-      rect.setAttribute('class', 'Parqueadero');
-      ParqueaderoesGroup.appendChild(rect);
+      rect.setAttribute('class', 'habitacion');
+      habitacionesGroup.appendChild(rect);
 
       const texto = createText(
         h.x + h.width / 2,
         h.y - 5,
-        `P ${h.id}`,
+        `Habitación ${h.id}`,
         { anchor: 'middle' }
       );
-      ParqueaderoesGroup.appendChild(texto);
+      habitacionesGroup.appendChild(texto);
 
-      if (h.id === idParqueadero) {
+      if (h.id === idHabitacion) {
         const tramo1 = crearLinea(entradaCenter.x + 10, entradaCenter.y, puerta.x, entradaCenter.y);
         const tramo2 = crearLinea(puerta.x, entradaCenter.y, puerta.x, puerta.y);
         rutasGroup.appendChild(tramo1);
         rutasGroup.appendChild(tramo2);
 
-        // Flecha
-        let direccionFlecha = 'right';
-        if (puerta.y < entradaCenter.y) direccionFlecha = 'up';
-        else if (puerta.y > entradaCenter.y) direccionFlecha = 'down';
-        else if (puerta.x < entradaCenter.x) direccionFlecha = 'left';
-
+        const direccionFlecha = puerta.y < entradaCenter.y ? 'up' :
+                                puerta.y > entradaCenter.y ? 'down' :
+                                puerta.x < entradaCenter.x ? 'left' : 'right';
         const flecha = crearFlecha(puerta.x, puerta.y, direccionFlecha);
         rutasGroup.appendChild(flecha);
 
-        // QR
+        const path = document.createElementNS(svgNS, 'path');
+        path.setAttribute('d', `M${entradaCenter.x + 10},${entradaCenter.y} L${puerta.x},${entradaCenter.y} L${puerta.x},${puerta.y}`);
+        path.setAttribute('fill', 'none');
+        path.setAttribute('id', `ruta-persona-${h.id}`);
+        path.style.visibility = 'hidden';
+        rutasGroup.appendChild(path);
+
+        const personaImg = document.createElementNS(svgNS, 'image');
+        personaImg.setAttribute('width', 24);
+        personaImg.setAttribute('height', 24);
+        personaImg.setAttributeNS('http://www.w3.org/1999/xlink', 'href', 'https://cdn-icons-png.flaticon.com/512/847/847969.png');
+        personaImg.setAttribute('class', 'usuario-animado');
+
+        const animateMotion = document.createElementNS(svgNS, 'animateMotion');
+        animateMotion.setAttribute('dur', '4s');
+        animateMotion.setAttribute('repeatCount', 'indefinite');
+
+        const mpath = document.createElementNS(svgNS, 'mpath');
+        mpath.setAttributeNS('http://www.w3.org/1999/xlink', 'href', `#ruta-persona-${h.id}`);
+        animateMotion.appendChild(mpath);
+        personaImg.appendChild(animateMotion);
+        rutasGroup.appendChild(personaImg);
+
         const urlPlano = `${baseUrl}?hab=${h.id}`;
         const centro = { x: h.x + h.width / 2, y: h.y + h.height / 2 };
 
@@ -250,7 +274,7 @@
           qrBorder.setAttribute('width', 84);
           qrBorder.setAttribute('height', 84);
           qrBorder.setAttribute('class', 'qr-border');
-          ParqueaderoesGroup.appendChild(qrBorder);
+          habitacionesGroup.appendChild(qrBorder);
 
           const img = document.createElementNS(svgNS, 'image');
           img.setAttributeNS(null, 'width', 80);
@@ -259,14 +283,13 @@
           img.setAttributeNS(null, 'y', centro.y - 40);
           img.setAttributeNS('http://www.w3.org/1999/xlink', 'href', canvas.toDataURL());
           img.setAttribute('class', 'qr-image');
-          ParqueaderoesGroup.appendChild(img);
+          habitacionesGroup.appendChild(img);
         });
       }
     });
 
     contPlano.appendChild(svg);
 
-    // Botones
     const botones = document.createElement('div');
     botones.className = 'plano-botones';
 
@@ -287,7 +310,7 @@
     const btnCompartir = document.createElement('button');
     btnCompartir.textContent = '🔗 Compartir';
     btnCompartir.onclick = async () => {
-      const url = `${baseUrl}?hab=${idParqueadero}`;
+      const url = `${baseUrl}?hab=${idHabitacion}`;
       try {
         await navigator.clipboard.writeText(url);
         alert(`Enlace copiado al portapapeles:\n${url}`);
@@ -303,16 +326,15 @@
     return contPlano;
   }
 
-  // Leer parámetro ?hab
   const params = new URLSearchParams(window.location.search);
   const habParam = parseInt(params.get('hab'), 10);
 
   if (!isNaN(habParam) && habParam >= 1 && habParam <= 10) {
-    const plano = crearPlanoParaParqueadero(habParam);
+    const plano = crearPlanoParaHabitacion(habParam);
     contenedor.appendChild(plano);
   } else {
     for (let i = 1; i <= 10; i++) {
-      const plano = crearPlanoParaParqueadero(i);
+      const plano = crearPlanoParaHabitacion(i);
       contenedor.appendChild(plano);
     }
   }
@@ -320,4 +342,3 @@
 
 </body>
 </html>
-
