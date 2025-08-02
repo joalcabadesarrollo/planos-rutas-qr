@@ -69,7 +69,7 @@
       background: #f7f9fc;
     }
 
-    .Habitacion {
+    .Parqueadero {
       fill: #e2e8f0;
       stroke: #3b82f6;
       stroke-width: 3;
@@ -97,88 +97,36 @@
     .usuario-animado {
       transform: translate(-12px, -12px);
     }
-
-    #modal-identificacion {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0, 0, 0, 0.6);
-      z-index: 9999;
-      justify-content: center;
-      align-items: center;
-    }
-
-    #modal-identificacion > div {
-      background: white;
-      padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-      width: 90%;
-      max-width: 400px;
-      text-align: center;
-    }
-
-    #modal-identificacion input {
-      width: 100%;
-      padding: 10px;
-      margin: 15px 0;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 16px;
-    }
-
-    #modal-identificacion button {
-      padding: 10px 20px;
-      background-color: #007BFF;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-size: 16px;
-      cursor: pointer;
-    }
   </style>
 </head>
 <body>
 
-<h1>Ubica tu XXX</h1>
+<h1>Ubica tu Vehículo</h1>
 
 <div id="contenedor-planos"></div>
-
-<!-- Modal de Identificación -->
-<div id="modal-identificacion">
-  <div>
-    <h2>Identificación requerida</h2>
-    <p>Por favor, ingresa tu nombre o número de ID:</p>
-    <input id="input-identificacion" type="text" placeholder="Ej: Juan Pérez o 12345" />
-    <button onclick="registrarIngreso()">Ingresar</button>
-  </div>
-</div>
 
 <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 <script>
   const svgNS = "http://www.w3.org/2000/svg";
-  const baseUrl = 'https://usuariodesarrollo.github.io/planos-rutas-qr/';
+  const baseUrl = 'https://joalcabadesarrollo.github.io/planos-rutas-qr/';
   const entrada = { x: 10, y: 170, width: 60, height: 60 };
   const entradaCenter = { x: entrada.x + entrada.width / 2, y: entrada.y + entrada.height / 2 };
   const pisos = 3;
-  const HabitacionesPorPiso = 10;
-  const Habitaciones = [];
+  const ParqueaderoesPorPiso = 10;
+  const Parqueaderoes = [];
   let haInteraccionado = false;
 
   document.addEventListener('click', () => { haInteraccionado = true; });
   document.addEventListener('touchstart', () => { haInteraccionado = true; });
 
   for (let piso = 1; piso <= pisos; piso++) {
-    for (let i = 1; i <= HabitacionesPorPiso; i++) {
-      const numeroHabitacion = piso * 100 + i;
+    for (let i = 1; i <= ParqueaderoesPorPiso; i++) {
+      const numeroParqueadero = piso * 100 + i;
       const fila = i <= 5 ? 50 : 250;
       const col = ((i - 1) % 5) * 140 + 100;
 
-      Habitaciones.push({
-        id: numeroHabitacion,
+      Parqueaderoes.push({
+        id: numeroParqueadero,
         piso,
         x: col,
         y: fila,
@@ -216,9 +164,9 @@
     let d = '';
     switch (direction) {
       case 'right': d = `M${x - size},${y - size} L${x},${y} L${x - size},${y + size}`; break;
-      case 'left': d = `M${x + size},${y - size} L${x},${y} L${x + size},${y + size}`; break;
-      case 'up': d = `M${x - size},${y + size} L${x},${y} L${x + size},${y + size}`; break;
-      case 'down': d = `M${x - size},${y - size} L${x},${y} L${x + size},${y - size}`; break;
+      case 'left':  d = `M${x + size},${y - size} L${x},${y} L${x + size},${y + size}`; break;
+      case 'up':    d = `M${x - size},${y + size} L${x},${y} L${x + size},${y + size}`; break;
+      case 'down':  d = `M${x - size},${y - size} L${x},${y} L${x + size},${y - size}`; break;
     }
     arrow.setAttribute('d', d);
     arrow.setAttribute('fill', 'none');
@@ -231,14 +179,14 @@
 
   const contenedor = document.getElementById('contenedor-planos');
 
-  function crearPlanoParaHabitacion(idHabitacion, piso) {
-    const HabitacionesDelPiso = Habitaciones.filter(h => h.piso === piso);
+  function crearPlanoParaParqueadero(idParqueadero, piso, placa) {
+    const ParqueaderoesDelPiso = Parqueaderoes.filter(h => h.piso === piso);
     const contPlano = document.createElement('div');
     contPlano.classList.add('plano-container');
 
     const titulo = document.createElement('div');
     titulo.classList.add('plano-titulo');
-    titulo.textContent = `Piso ${piso} - Ruta a Habitacion ${idHabitacion}`;
+    titulo.textContent = `Piso ${piso} - Ruta a Parqueadero ${idParqueadero}`;
     contPlano.appendChild(titulo);
 
     const svg = document.createElementNS(svgNS, 'svg');
@@ -262,13 +210,13 @@
     );
     svg.appendChild(textoEntrada);
 
-    const HabitacionesGroup = document.createElementNS(svgNS, 'g');
-    svg.appendChild(HabitacionesGroup);
+    const ParqueaderoesGroup = document.createElementNS(svgNS, 'g');
+    svg.appendChild(ParqueaderoesGroup);
 
     const rutasGroup = document.createElementNS(svgNS, 'g');
     svg.appendChild(rutasGroup);
 
-    HabitacionesDelPiso.forEach(h => {
+    ParqueaderoesDelPiso.forEach(h => {
       let puerta = {};
       if (h.y < 150) {
         puerta.x = h.x;
@@ -283,18 +231,28 @@
       rect.setAttribute('y', h.y);
       rect.setAttribute('width', h.width);
       rect.setAttribute('height', h.height);
-      rect.setAttribute('class', 'Habitacion');
-      HabitacionesGroup.appendChild(rect);
+      rect.setAttribute('class', 'Parqueadero');
+      ParqueaderoesGroup.appendChild(rect);
 
       const texto = createText(
         h.x + h.width / 2,
         h.y - 5,
-        `Habitacion ${h.id}`,
+        `Parqueadero ${h.id}`,
         { anchor: 'middle' }
       );
-      HabitacionesGroup.appendChild(texto);
+      ParqueaderoesGroup.appendChild(texto);
 
-      if (h.id === idHabitacion) {
+      if (h.id === idParqueadero && placa) {
+        const textoPlaca = createText(
+          h.x + h.width / 2,
+          h.y + h.height + 18,
+          `Placa: ${placa}`,
+          { anchor: 'middle', fill: '#555' }
+        );
+        ParqueaderoesGroup.appendChild(textoPlaca);
+      }
+
+      if (h.id === idParqueadero) {
         const tramo1 = crearLinea(entradaCenter.x + 10, entradaCenter.y, puerta.x, entradaCenter.y);
         const tramo2 = crearLinea(puerta.x, entradaCenter.y, puerta.x, puerta.y);
         rutasGroup.appendChild(tramo1);
@@ -329,7 +287,7 @@
         personaImg.appendChild(animateMotion);
         rutasGroup.appendChild(personaImg);
 
-        const urlPlano = `${baseUrl}?hab=${h.id}`;
+        const urlPlano = `${baseUrl}?hab=${h.id}&placa=${encodeURIComponent(placa || '')}`;
         const centro = { x: h.x + h.width / 2, y: h.y + h.height / 2 };
 
         const canvas = document.createElement('canvas');
@@ -342,7 +300,7 @@
           qrBorder.setAttribute('width', 84);
           qrBorder.setAttribute('height', 84);
           qrBorder.setAttribute('class', 'qr-border');
-          HabitacionesGroup.appendChild(qrBorder);
+          ParqueaderoesGroup.appendChild(qrBorder);
 
           const img = document.createElementNS(svgNS, 'image');
           img.setAttributeNS(null, 'width', 80);
@@ -351,31 +309,10 @@
           img.setAttributeNS(null, 'y', centro.y - 40);
           img.setAttributeNS('http://www.w3.org/1999/xlink', 'href', canvas.toDataURL());
           img.setAttribute('class', 'qr-image');
-          HabitacionesGroup.appendChild(img);
-
-          // NUEVO: Añadir identificación debajo del QR
-          const logGuardado = JSON.parse(localStorage.getItem('logIngreso') || '{}');
-          const idTexto = logGuardado.id || 'Visitante';
-
-          const fondo = document.createElementNS(svgNS, 'rect');
-          fondo.setAttribute('x', centro.x - 50);
-          fondo.setAttribute('y', centro.y + 40);
-          fondo.setAttribute('width', 100);
-          fondo.setAttribute('height', 22);
-          fondo.setAttribute('fill', '#ffffff');
-          fondo.setAttribute('opacity', '0.8');
-          HabitacionesGroup.appendChild(fondo);
-
-          const textID = createText(
-            centro.x,
-            centro.y + 55,
-            idTexto,
-            { anchor: 'middle', fill: '#333' }
-          );
-          HabitacionesGroup.appendChild(textID);
+          ParqueaderoesGroup.appendChild(img);
         });
 
-        const descripcionAudio = `Te encuentras en el piso ${piso}. La ruta va desde la entrada hasta la Habitacion ${idHabitacion}. Sigue la flecha roja para llegar.`;
+        const descripcionAudio = `Te encuentras en el piso ${piso}. La ruta va desde la entrada hasta el Parqueadero ${idParqueadero}. La placa del vehículo es ${placa || 'desconocida'}. Sigue la flecha roja para llegar.`;
         setTimeout(() => hablar(descripcionAudio), 500);
       }
     });
@@ -389,7 +326,9 @@
     btnImprimir.textContent = '🖨️ Imprimir';
     btnImprimir.onclick = () => {
       const printWindow = window.open('', '', 'width=960,height=600');
-      printWindow.document.write('<html><head><title>Imprimir Plano</title><style>body{margin:0;}svg{width:100%;}</style></head><body>');
+      printWindow.document.write('<html><head><title>Imprimir Plano</title>');
+      printWindow.document.write('<style>body{margin:0;}svg{width:100%;}</style>');
+      printWindow.document.write('</head><body>');
       printWindow.document.write(svg.outerHTML);
       printWindow.document.write('</body></html>');
       printWindow.document.close();
@@ -400,7 +339,7 @@
     const btnCompartir = document.createElement('button');
     btnCompartir.textContent = '🔗 Compartir';
     btnCompartir.onclick = async () => {
-      const url = `${baseUrl}?hab=${idHabitacion}`;
+      const url = `${baseUrl}?hab=${idParqueadero}&placa=${encodeURIComponent(placa || '')}`;
       try {
         await navigator.clipboard.writeText(url);
         alert(`Enlace copiado al portapapeles:\n${url}`);
@@ -412,8 +351,8 @@
     const btnAudio = document.createElement('button');
     btnAudio.textContent = '🔊 Escuchar ruta';
     btnAudio.onclick = () => {
-      const descripcionAudio = `Te encuentras en el piso ${piso}. La ruta va desde la entrada hasta la Habitacion ${idHabitacion}. Sigue la flecha roja para llegar.`;
-      hablar(descripcionAudio, true);
+      const descripcionAudio = `Te encuentras en el piso ${piso}. La ruta va desde la entrada hasta el Parqueadero ${idParqueadero}. La placa del vehículo es ${placa || 'desconocida'}. Sigue la flecha roja para llegar.`;
+      hablar(descripcionAudio, true); // forzado
     };
 
     botones.appendChild(btnImprimir);
@@ -438,39 +377,20 @@
 
   const params = new URLSearchParams(window.location.search);
   const habParam = parseInt(params.get('hab'), 10);
+  const placaParam = params.get('placa') || '';
 
   if (!isNaN(habParam)) {
     const piso = Math.floor(habParam / 100);
-    const plano = crearPlanoParaHabitacion(habParam, piso);
+    const plano = crearPlanoParaParqueadero(habParam, piso, placaParam);
     contenedor.appendChild(plano);
   } else {
     for (let piso = 1; piso <= pisos; piso++) {
-      const HabitacionesDelPiso = Habitaciones.filter(h => h.piso === piso);
-      HabitacionesDelPiso.forEach(hab => {
-        const plano = crearPlanoParaHabitacion(hab.id, piso);
+      const ParqueaderoesDelPiso = Parqueaderoes.filter(h => h.piso === piso);
+      ParqueaderoesDelPiso.forEach(hab => {
+        const plano = crearPlanoParaParqueadero(hab.id, piso, '');
         contenedor.appendChild(plano);
       });
     }
-  }
-
-  window.addEventListener('load', () => {
-    document.getElementById('modal-identificacion').style.display = 'flex';
-  });
-
-  let logUsuario = { id: '', horaIngreso: '' };
-
-  function registrarIngreso() {
-    const id = document.getElementById('input-identificacion').value.trim();
-    if (!id) {
-      alert('Por favor, introduce tu identificación.');
-      return;
-    }
-
-    logUsuario.id = id;
-    logUsuario.horaIngreso = new Date().toISOString();
-    localStorage.setItem('logIngreso', JSON.stringify(logUsuario));
-    document.getElementById('modal-identificacion').style.display = 'none';
-    location.reload();
   }
 </script>
 
