@@ -5,7 +5,140 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Planos por Piso</title>
   <style>
-    /* ... (Tu mismo estilo CSS se mantiene igual) ... */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 20px;
+      background: #f9fafb;
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+      font-weight: 700;
+      font-size: 2.2rem;
+      margin-bottom: 40px;
+      color: #222;
+    }
+
+    .plano-container {
+      margin: 0 auto 50px auto;
+      max-width: 900px;
+      border-radius: 10px;
+      box-shadow: 0 6px 15px rgba(0,123,255,0.2);
+      background: #ffffff;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .plano-titulo {
+      text-align: center;
+      font-weight: 700;
+      padding: 15px 0;
+      background-color: #007BFF;
+      color: #fff;
+      font-size: 1.5rem;
+    }
+
+    .plano-botones {
+      text-align: center;
+      margin: 10px 0 20px 0;
+    }
+
+    .plano-botones button {
+      margin: 5px;
+      padding: 8px 14px;
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      background-color: #007BFF;
+      color: white;
+      transition: background-color 0.3s ease;
+    }
+
+    .plano-botones button:hover {
+      background-color: #0056b3;
+    }
+
+    svg {
+      display: block;
+      margin: 10px auto 0 auto;
+      max-width: 100%;
+      height: auto;
+      background: #f7f9fc;
+    }
+
+    .Habitacion {
+      fill: #e2e8f0;
+      stroke: #3b82f6;
+      stroke-width: 3;
+    }
+
+    text {
+      font-size: 14px;
+      font-weight: 600;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .qr-border {
+      fill: white;
+      stroke: #007BFF;
+      stroke-width: 2;
+      rx: 6;
+      ry: 6;
+    }
+
+    .qr-image {
+      pointer-events: none;
+    }
+
+    .usuario-animado {
+      transform: translate(-12px, -12px);
+    }
+
+    #modal-identificacion {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #modal-identificacion > div {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+    }
+
+    #modal-identificacion input {
+      width: 100%;
+      padding: 10px;
+      margin: 15px 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+
+    #modal-identificacion button {
+      padding: 10px 20px;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -27,7 +160,7 @@
 <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 <script>
   const svgNS = "http://www.w3.org/2000/svg";
-  const baseUrl = 'https://joalcabadesarrollo.github.io/planos-rutas-qr/';
+  const baseUrl = 'https://usuariodesarrollo.github.io/planos-rutas-qr/';
   const entrada = { x: 10, y: 170, width: 60, height: 60 };
   const entradaCenter = { x: entrada.x + entrada.width / 2, y: entrada.y + entrada.height / 2 };
   const pisos = 3;
@@ -219,6 +352,27 @@
           img.setAttributeNS('http://www.w3.org/1999/xlink', 'href', canvas.toDataURL());
           img.setAttribute('class', 'qr-image');
           HabitacionesGroup.appendChild(img);
+
+          // NUEVO: Añadir identificación debajo del QR
+          const logGuardado = JSON.parse(localStorage.getItem('logIngreso') || '{}');
+          const idTexto = logGuardado.id || 'Visitante';
+
+          const fondo = document.createElementNS(svgNS, 'rect');
+          fondo.setAttribute('x', centro.x - 50);
+          fondo.setAttribute('y', centro.y + 40);
+          fondo.setAttribute('width', 100);
+          fondo.setAttribute('height', 22);
+          fondo.setAttribute('fill', '#ffffff');
+          fondo.setAttribute('opacity', '0.8');
+          HabitacionesGroup.appendChild(fondo);
+
+          const textID = createText(
+            centro.x,
+            centro.y + 55,
+            idTexto,
+            { anchor: 'middle', fill: '#333' }
+          );
+          HabitacionesGroup.appendChild(textID);
         });
 
         const descripcionAudio = `Te encuentras en el piso ${piso}. La ruta va desde la entrada hasta la Habitacion ${idHabitacion}. Sigue la flecha roja para llegar.`;
@@ -299,10 +453,11 @@
     }
   }
 
-  // Mantener apertura automática
   window.addEventListener('load', () => {
     document.getElementById('modal-identificacion').style.display = 'flex';
   });
+
+  let logUsuario = { id: '', horaIngreso: '' };
 
   function registrarIngreso() {
     const id = document.getElementById('input-identificacion').value.trim();
@@ -311,46 +466,11 @@
       return;
     }
 
-    const logUsuario = {
-      id: id,
-      horaIngreso: new Date().toISOString()
-    };
+    logUsuario.id = id;
+    logUsuario.horaIngreso = new Date().toISOString();
     localStorage.setItem('logIngreso', JSON.stringify(logUsuario));
     document.getElementById('modal-identificacion').style.display = 'none';
-
-    actualizarEtiquetasID();
-  }
-
-  function actualizarEtiquetasID() {
-    const logGuardado = JSON.parse(localStorage.getItem('logIngreso') || '{}');
-    const idTexto = logGuardado.id || 'Visitante';
-
-    document.querySelectorAll('.qr-image').forEach(img => {
-      const x = parseFloat(img.getAttribute('x')) + 40;
-      const y = parseFloat(img.getAttribute('y')) + 40;
-
-      const existing = img.parentNode.querySelector(`text[data-id-etiqueta="true"][data-x="${x}"]`);
-      if (existing) return;
-
-      const fondo = document.createElementNS(svgNS, 'rect');
-      fondo.setAttribute('x', x - 50);
-      fondo.setAttribute('y', y + 40);
-      fondo.setAttribute('width', 100);
-      fondo.setAttribute('height', 22);
-      fondo.setAttribute('fill', '#ffffff');
-      fondo.setAttribute('opacity', '0.8');
-      img.parentNode.appendChild(fondo);
-
-      const textID = createText(x, y + 55, idTexto, { anchor: 'middle', fill: '#333' });
-      textID.setAttribute('data-id-etiqueta', 'true');
-      textID.setAttribute('data-x', x);
-      img.parentNode.appendChild(textID);
-    });
-  }
-
-  // Mostrar ID automáticamente si ya existe
-  if (localStorage.getItem('logIngreso')) {
-    actualizarEtiquetasID();
+    location.reload();
   }
 </script>
 
