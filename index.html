@@ -69,7 +69,7 @@
       background: #f7f9fc;
     }
 
-    .Parqueadero {
+    .Habitacion {
       fill: #e2e8f0;
       stroke: #3b82f6;
       stroke-width: 3;
@@ -97,36 +97,88 @@
     .usuario-animado {
       transform: translate(-12px, -12px);
     }
+
+    #modal-identificacion {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #modal-identificacion > div {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+    }
+
+    #modal-identificacion input {
+      width: 100%;
+      padding: 10px;
+      margin: 15px 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+
+    #modal-identificacion button {
+      padding: 10px 20px;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
 
-<h1>Ubica tu Vehículo</h1>
+<h1>Ubica tu XXX</h1>
 
 <div id="contenedor-planos"></div>
+
+<!-- Modal de Identificación -->
+<div id="modal-identificacion">
+  <div>
+    <h2>Identificación requerida</h2>
+    <p>Por favor, ingresa tu nombre o número de ID:</p>
+    <input id="input-identificacion" type="text" placeholder="Ej: Juan Pérez o 12345" />
+    <button onclick="registrarIngreso()">Ingresar</button>
+  </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 <script>
   const svgNS = "http://www.w3.org/2000/svg";
-  const baseUrl = 'https://joalcabadesarrollo.github.io/planos-rutas-qr/';
+  const baseUrl = 'https://usuariodesarrollo.github.io/planos-rutas-qr/';
   const entrada = { x: 10, y: 170, width: 60, height: 60 };
   const entradaCenter = { x: entrada.x + entrada.width / 2, y: entrada.y + entrada.height / 2 };
   const pisos = 3;
-  const ParqueaderoesPorPiso = 10;
-  const Parqueaderoes = [];
+  const HabitacionesPorPiso = 10;
+  const Habitaciones = [];
   let haInteraccionado = false;
 
   document.addEventListener('click', () => { haInteraccionado = true; });
   document.addEventListener('touchstart', () => { haInteraccionado = true; });
 
   for (let piso = 1; piso <= pisos; piso++) {
-    for (let i = 1; i <= ParqueaderoesPorPiso; i++) {
-      const numeroParqueadero = piso * 100 + i;
+    for (let i = 1; i <= HabitacionesPorPiso; i++) {
+      const numeroHabitacion = piso * 100 + i;
       const fila = i <= 5 ? 50 : 250;
       const col = ((i - 1) % 5) * 140 + 100;
 
-      Parqueaderoes.push({
-        id: numeroParqueadero,
+      Habitaciones.push({
+        id: numeroHabitacion,
         piso,
         x: col,
         y: fila,
@@ -164,9 +216,9 @@
     let d = '';
     switch (direction) {
       case 'right': d = `M${x - size},${y - size} L${x},${y} L${x - size},${y + size}`; break;
-      case 'left':  d = `M${x + size},${y - size} L${x},${y} L${x + size},${y + size}`; break;
-      case 'up':    d = `M${x - size},${y + size} L${x},${y} L${x + size},${y + size}`; break;
-      case 'down':  d = `M${x - size},${y - size} L${x},${y} L${x + size},${y - size}`; break;
+      case 'left': d = `M${x + size},${y - size} L${x},${y} L${x + size},${y + size}`; break;
+      case 'up': d = `M${x - size},${y + size} L${x},${y} L${x + size},${y + size}`; break;
+      case 'down': d = `M${x - size},${y - size} L${x},${y} L${x + size},${y - size}`; break;
     }
     arrow.setAttribute('d', d);
     arrow.setAttribute('fill', 'none');
@@ -179,14 +231,14 @@
 
   const contenedor = document.getElementById('contenedor-planos');
 
-  function crearPlanoParaParqueadero(idParqueadero, piso) {
-    const ParqueaderoesDelPiso = Parqueaderoes.filter(h => h.piso === piso);
+  function crearPlanoParaHabitacion(idHabitacion, piso) {
+    const HabitacionesDelPiso = Habitaciones.filter(h => h.piso === piso);
     const contPlano = document.createElement('div');
     contPlano.classList.add('plano-container');
 
     const titulo = document.createElement('div');
     titulo.classList.add('plano-titulo');
-    titulo.textContent = `Piso ${piso} - Ruta a Parqueadero ${idParqueadero}`;
+    titulo.textContent = `Piso ${piso} - Ruta a Habitacion ${idHabitacion}`;
     contPlano.appendChild(titulo);
 
     const svg = document.createElementNS(svgNS, 'svg');
@@ -210,13 +262,13 @@
     );
     svg.appendChild(textoEntrada);
 
-    const ParqueaderoesGroup = document.createElementNS(svgNS, 'g');
-    svg.appendChild(ParqueaderoesGroup);
+    const HabitacionesGroup = document.createElementNS(svgNS, 'g');
+    svg.appendChild(HabitacionesGroup);
 
     const rutasGroup = document.createElementNS(svgNS, 'g');
     svg.appendChild(rutasGroup);
 
-    ParqueaderoesDelPiso.forEach(h => {
+    HabitacionesDelPiso.forEach(h => {
       let puerta = {};
       if (h.y < 150) {
         puerta.x = h.x;
@@ -231,18 +283,18 @@
       rect.setAttribute('y', h.y);
       rect.setAttribute('width', h.width);
       rect.setAttribute('height', h.height);
-      rect.setAttribute('class', 'Parqueadero');
-      ParqueaderoesGroup.appendChild(rect);
+      rect.setAttribute('class', 'Habitacion');
+      HabitacionesGroup.appendChild(rect);
 
       const texto = createText(
         h.x + h.width / 2,
         h.y - 5,
-        `Parqueadero ${h.id}`,
+        `Habitacion ${h.id}`,
         { anchor: 'middle' }
       );
-      ParqueaderoesGroup.appendChild(texto);
+      HabitacionesGroup.appendChild(texto);
 
-      if (h.id === idParqueadero) {
+      if (h.id === idHabitacion) {
         const tramo1 = crearLinea(entradaCenter.x + 10, entradaCenter.y, puerta.x, entradaCenter.y);
         const tramo2 = crearLinea(puerta.x, entradaCenter.y, puerta.x, puerta.y);
         rutasGroup.appendChild(tramo1);
@@ -290,7 +342,7 @@
           qrBorder.setAttribute('width', 84);
           qrBorder.setAttribute('height', 84);
           qrBorder.setAttribute('class', 'qr-border');
-          ParqueaderoesGroup.appendChild(qrBorder);
+          HabitacionesGroup.appendChild(qrBorder);
 
           const img = document.createElementNS(svgNS, 'image');
           img.setAttributeNS(null, 'width', 80);
@@ -299,10 +351,10 @@
           img.setAttributeNS(null, 'y', centro.y - 40);
           img.setAttributeNS('http://www.w3.org/1999/xlink', 'href', canvas.toDataURL());
           img.setAttribute('class', 'qr-image');
-          ParqueaderoesGroup.appendChild(img);
+          HabitacionesGroup.appendChild(img);
         });
 
-        const descripcionAudio = `Te encuentras en el piso ${piso}. La ruta va desde la entrada hasta la Parqueadero ${idParqueadero}. Sigue la flecha roja para llegar.`;
+        const descripcionAudio = `Te encuentras en el piso ${piso}. La ruta va desde la entrada hasta la Habitacion ${idHabitacion}. Sigue la flecha roja para llegar.`;
         setTimeout(() => hablar(descripcionAudio), 500);
       }
     });
@@ -329,7 +381,7 @@
     const btnCompartir = document.createElement('button');
     btnCompartir.textContent = '🔗 Compartir';
     btnCompartir.onclick = async () => {
-      const url = `${baseUrl}?hab=${idParqueadero}`;
+      const url = `${baseUrl}?hab=${idHabitacion}`;
       try {
         await navigator.clipboard.writeText(url);
         alert(`Enlace copiado al portapapeles:\n${url}`);
@@ -341,8 +393,8 @@
     const btnAudio = document.createElement('button');
     btnAudio.textContent = '🔊 Escuchar ruta';
     btnAudio.onclick = () => {
-      const descripcionAudio = `Te encuentras en el piso ${piso}. La ruta va desde la entrada hasta la Parqueadero ${idParqueadero}. Sigue la flecha roja para llegar.`;
-      hablar(descripcionAudio, true); // forzado
+      const descripcionAudio = `Te encuentras en el piso ${piso}. La ruta va desde la entrada hasta la Habitacion ${idHabitacion}. Sigue la flecha roja para llegar.`;
+      hablar(descripcionAudio, true);
     };
 
     botones.appendChild(btnImprimir);
@@ -354,15 +406,8 @@
   }
 
   function hablar(texto, forzado = false) {
-    if (!('speechSynthesis' in window)) {
-      console.warn('Tu navegador no soporta síntesis de voz.');
-      return;
-    }
-
-    if (!haInteraccionado && !forzado) {
-      console.log('Esperando interacción del usuario para reproducir voz automáticamente.');
-      return;
-    }
+    if (!('speechSynthesis' in window)) return;
+    if (!haInteraccionado && !forzado) return;
 
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(texto);
@@ -377,18 +422,51 @@
 
   if (!isNaN(habParam)) {
     const piso = Math.floor(habParam / 100);
-    const plano = crearPlanoParaParqueadero(habParam, piso);
+    const plano = crearPlanoParaHabitacion(habParam, piso);
     contenedor.appendChild(plano);
   } else {
     for (let piso = 1; piso <= pisos; piso++) {
-      const ParqueaderoesDelPiso = Parqueaderoes.filter(h => h.piso === piso);
-      ParqueaderoesDelPiso.forEach(hab => {
-        const plano = crearPlanoParaParqueadero(hab.id, piso);
+      const HabitacionesDelPiso = Habitaciones.filter(h => h.piso === piso);
+      HabitacionesDelPiso.forEach(hab => {
+        const plano = crearPlanoParaHabitacion(hab.id, piso);
         contenedor.appendChild(plano);
       });
     }
   }
-</script>
 
+  // Mostrar modal al cargar
+  window.addEventListener('load', () => {
+    document.getElementById('modal-identificacion').style.display = 'flex';
+  });
+
+  // Registro de ingreso/salida
+  let logUsuario = {
+    id: '',
+    horaIngreso: '',
+    horaSalida: '',
+  };
+
+  function registrarIngreso() {
+    const input = document.getElementById('input-identificacion');
+    const id = input.value.trim();
+    if (!id) {
+      alert('Por favor, ingresa una identificación válida.');
+      return;
+    }
+
+    logUsuario.id = id;
+    logUsuario.horaIngreso = new Date().toISOString();
+    console.log('Ingreso registrado:', logUsuario);
+    localStorage.setItem('logIngreso', JSON.stringify(logUsuario));
+
+    document.getElementById('modal-identificacion').style.display = 'none';
+  }
+
+  window.addEventListener('beforeunload', () => {
+    logUsuario.horaSalida = new Date().toISOString();
+    console.log('Salida registrada:', logUsuario);
+    localStorage.setItem('logSalida', JSON.stringify(logUsuario));
+  });
+</script>
 </body>
 </html>
