@@ -45,18 +45,6 @@
       cursor: pointer;
     }
 
-    button:hover {
-      opacity: 0.9;
-      transform: scale(1.03);
-      transition: 0.2s;
-    }
-
-    input:focus {
-      outline: none;
-      border-color: #007BFF;
-      box-shadow: 0 0 5px rgba(0,123,255,0.5);
-    }
-
     .plano {
       border: 1px solid #ccc;
       padding: 20px;
@@ -95,22 +83,14 @@
 
 <div class="buscador">
   <input 
-    list="placasList"
     type="text" 
     id="inputPlaca" 
     placeholder="Ej: ABC123"
     maxlength="6"
+    pattern="[A-Za-z]{3}[0-9]{3}"
+    required
   />
-  <datalist id="placasList"></datalist>
-
-  <br><br>
-
   <button onclick="buscarPorPlaca()">Buscar</button>
-  <button onclick="limpiarBusqueda()" style="background:#6c757d;margin-left:5px;">
-    Limpiar
-  </button>
-
-  <small id="mensajePlaca" style="display:block;margin-top:8px;color:#666;"></small>
 </div>
 
 <div id="contenedor"></div>
@@ -138,7 +118,6 @@ function obtenerVozEspanol() {
   return voces.find(v => v.lang.toLowerCase().startsWith('es')) || null;
 }
 
-// 🔢 PLANOS
 const planos = [
   { id: 101, piso: 1 },
   { id: 102, piso: 1 },
@@ -149,57 +128,21 @@ const planos = [
   { id: 302, piso: 3 },
 ];
 
-// 🔎 VALIDACIÓN EN VIVO
-const inputPlaca = document.getElementById('inputPlaca');
-const mensaje = document.getElementById('mensajePlaca');
-
-inputPlaca.addEventListener('input', () => {
-  const valor = inputPlaca.value.toUpperCase();
-  inputPlaca.value = valor;
-
-  if (valor.length === 0) {
-    mensaje.textContent = '';
-  } else if (/^[A-Z]{3}\d{3}$/.test(valor)) {
-    mensaje.textContent = '✅ Placa válida';
-    mensaje.style.color = 'green';
-  } else {
-    mensaje.textContent = 'Formato esperado: ABC123';
-    mensaje.style.color = 'red';
-  }
-});
-
-// ⌨️ ENTER
-inputPlaca.addEventListener('keypress', function(e) {
-  if (e.key === 'Enter') buscarPorPlaca();
-});
-
-// 🔁 AUTOCOMPLETE
-function cargarSugerencias() {
-  const lista = document.getElementById('placasList');
-  const placasGuardadas = JSON.parse(localStorage.getItem("placasParqueadero") || '{}');
-
-  lista.innerHTML = '';
-
-  Object.values(placasGuardadas).forEach(p => {
-    const option = document.createElement('option');
-    option.value = p;
-    lista.appendChild(option);
-  });
-}
-
-// 🔎 BUSCAR
+// 🔎 Buscar por placa (VALIDADO)
 function buscarPorPlaca() {
-  const placa = inputPlaca.value.trim().toUpperCase();
+  const input = document.getElementById('inputPlaca');
+  const placa = input.value.trim().toUpperCase();
 
   if (!/^[A-Z]{3}\d{3}$/.test(placa)) {
     alert("Ingresa una placa válida. Ej: ABC123");
-    inputPlaca.focus();
+    input.focus();
     return;
   }
 
   contenedor.innerHTML = '';
 
   const placasGuardadas = JSON.parse(localStorage.getItem("placasParqueadero") || '{}');
+
   const encontrado = Object.entries(placasGuardadas).find(([id, p]) => p === placa);
 
   if (encontrado) {
@@ -207,44 +150,36 @@ function buscarPorPlaca() {
     const plano = planos.find(p => p.id === id);
     mostrarPlano(plano.id, plano.piso, placa);
   } else {
-    contenedor.innerHTML = `
-      <div style="
-        text-align:center;
-        padding:20px;
-        background:#fff3cd;
-        border-radius:10px;
-        margin-top:20px;
-      ">
-        ❌ No se encontró la placa <strong>${placa}</strong>
-      </div>
-    `;
+    contenedor.innerHTML = `<p style="text-align:center;color:red;">No se encontró la placa ${placa}</p>`;
   }
 }
 
-// 🧹 LIMPIAR
-function limpiarBusqueda() {
-  inputPlaca.value = '';
-  mensaje.textContent = '';
-  contenedor.innerHTML = '';
-}
+// ⌨️ Buscar con ENTER
+document.getElementById('inputPlaca').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') {
+    buscarPorPlaca();
+  }
+});
 
-// 📍 PARÁMETROS
+// 📍 Leer parámetros
 const params = new URLSearchParams(location.search);
 const hab = parseInt(params.get("hab"));
 let placa = params.get("placa") || '';
 
 const placasGuardadas = JSON.parse(localStorage.getItem("placasParqueadero") || '{}');
 
-// 🚗 FLUJO PRINCIPAL
+// 🚗 LÓGICA PRINCIPAL
 if (hab) {
   const plano = planos.find(p => p.id === hab);
 
   if (!plano) {
     contenedor.innerHTML = '<p style="text-align:center;">Parqueadero no encontrado.</p>';
-  } else {
+  } 
+  else {
     if (!placa && !placasGuardadas[hab]) {
       mostrarIngresoPlaca(hab);
-    } else {
+    } 
+    else {
       placa = placa || placasGuardadas[hab];
       placasGuardadas[hab] = placa;
       localStorage.setItem("placasParqueadero", JSON.stringify(placasGuardadas));
@@ -253,14 +188,15 @@ if (hab) {
       mostrarPlano(plano.id, plano.piso, plano.placa);
     }
   }
-} else {
+} 
+else {
   planos.forEach(p => {
     p.placa = placasGuardadas[p.id] || '';
     mostrarPlano(p.id, p.piso, p.placa);
   });
 }
 
-// 🧾 INGRESO
+// 🧾 INGRESO DE PLACA
 function mostrarIngresoPlaca(hab) {
   const div = document.createElement('div');
 
@@ -313,7 +249,7 @@ function mostrarIngresoPlaca(hab) {
   contenedor.appendChild(div);
 }
 
-// 💾 GUARDAR
+// 💾 GUARDAR PLACA
 function guardarPlaca(hab) {
   const input = document.getElementById('nuevaPlaca');
   const placa = input.value.trim().toUpperCase();
@@ -331,7 +267,7 @@ function guardarPlaca(hab) {
   location.href = `${location.pathname}?hab=${hab}&placa=${placa}`;
 }
 
-// 🗺️ PLANO
+// 🗺️ MOSTRAR PLANO
 function mostrarPlano(id, piso, placa) {
   const div = document.createElement('div');
   div.className = 'plano';
@@ -345,6 +281,7 @@ function mostrarPlano(id, piso, placa) {
   div.appendChild(canvas);
 
   const ruta = `${baseUrl}?hab=${id}&placa=${encodeURIComponent(placa)}`;
+
   QRCode.toCanvas(canvas, ruta, { width: 180 });
 
   const btnAudio = document.createElement('button');
@@ -354,11 +291,6 @@ function mostrarPlano(id, piso, placa) {
 
   div.appendChild(btnAudio);
   contenedor.appendChild(div);
-
-  // 🔊 AUTO AUDIO
-  setTimeout(() => {
-    hablarRuta(id, piso, placa);
-  }, 500);
 }
 
 // 🔊 AUDIO
@@ -381,9 +313,7 @@ function hablarRuta(id, piso, placa) {
   speechSynthesis.speak(msg);
 }
 
-// INIT
 cargarVoces();
-cargarSugerencias();
 </script>
 
 </body>
