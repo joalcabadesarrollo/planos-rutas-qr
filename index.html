@@ -32,6 +32,7 @@
       border-radius: 6px;
       border: 1px solid #ccc;
       width: 250px;
+      text-transform: uppercase;
     }
 
     .buscador button {
@@ -81,7 +82,14 @@
 <h1>Ubica tu Vehículo</h1>
 
 <div class="buscador">
-  <input type="text" id="inputPlaca" placeholder="Buscar por placa..." />
+  <input 
+    type="text" 
+    id="inputPlaca" 
+    placeholder="Ej: ABC123"
+    maxlength="6"
+    pattern="[A-Za-z]{3}[0-9]{3}"
+    required
+  />
   <button onclick="buscarPorPlaca()">Buscar</button>
 </div>
 
@@ -120,9 +128,17 @@ const planos = [
   { id: 302, piso: 3 },
 ];
 
-// 🔎 Buscar por placa
+// 🔎 Buscar por placa (VALIDADO)
 function buscarPorPlaca() {
-  const placa = document.getElementById('inputPlaca').value.trim().toUpperCase();
+  const input = document.getElementById('inputPlaca');
+  const placa = input.value.trim().toUpperCase();
+
+  if (!/^[A-Z]{3}\d{3}$/.test(placa)) {
+    alert("Ingresa una placa válida. Ej: ABC123");
+    input.focus();
+    return;
+  }
+
   contenedor.innerHTML = '';
 
   const placasGuardadas = JSON.parse(localStorage.getItem("placasParqueadero") || '{}');
@@ -137,6 +153,13 @@ function buscarPorPlaca() {
     contenedor.innerHTML = `<p style="text-align:center;color:red;">No se encontró la placa ${placa}</p>`;
   }
 }
+
+// ⌨️ Buscar con ENTER
+document.getElementById('inputPlaca').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') {
+    buscarPorPlaca();
+  }
+});
 
 // 📍 Leer parámetros
 const params = new URLSearchParams(location.search);
@@ -173,7 +196,7 @@ else {
   });
 }
 
-// 🧾 INTERFAZ INGRESO
+// 🧾 INGRESO DE PLACA
 function mostrarIngresoPlaca(hab) {
   const div = document.createElement('div');
 
@@ -194,6 +217,7 @@ function mostrarIngresoPlaca(hab) {
         type="text" 
         id="nuevaPlaca" 
         placeholder="Ej: ABC123"
+        maxlength="6"
         style="
           margin-top:15px;
           padding:12px;
@@ -269,7 +293,7 @@ function mostrarPlano(id, piso, placa) {
   contenedor.appendChild(div);
 }
 
-// 🔊 AUDIO EN ESPAÑOL
+// 🔊 AUDIO
 function hablarRuta(id, piso, placa) {
   if (!window.speechSynthesis) return;
 
@@ -290,27 +314,6 @@ function hablarRuta(id, piso, placa) {
 }
 
 cargarVoces();
-
-// 📲 PWA
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    const blob = new Blob([`
-      const CACHE = 'parqueadero-v1';
-      self.addEventListener('install', e => {
-        e.waitUntil(caches.open(CACHE).then(c => c.addAll(['.'])));
-      });
-      self.addEventListener('fetch', e => {
-        e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
-      });
-    `], { type: 'text/javascript' });
-
-    const swURL = URL.createObjectURL(blob);
-
-    navigator.serviceWorker.register(swURL).then(() => {
-      console.log("PWA activa 🚗");
-    });
-  });
-}
 </script>
 
 </body>
