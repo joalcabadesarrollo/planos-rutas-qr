@@ -54,11 +54,6 @@
       cursor: pointer;
       background-color: #007BFF;
       color: white;
-      transition: background-color 0.3s ease;
-    }
-
-    .plano-botones button:hover {
-      background-color: #0056b3;
     }
 
     svg {
@@ -78,320 +73,131 @@
     text {
       font-size: 14px;
       font-weight: 600;
-      pointer-events: none;
-      user-select: none;
-    }
-
-    .qr-border {
-      fill: white;
-      stroke: #007BFF;
-      stroke-width: 2;
-      rx: 6;
-      ry: 6;
-    }
-
-    .qr-image {
-      pointer-events: none;
-    }
-
-    .usuario-animado {
-      transform: translate(-12px, -12px);
     }
   </style>
 </head>
 <body>
 
 <h1>Ubica tu Vehículo</h1>
-
 <div id="contenedor-planos"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 <script>
-  const svgNS = "http://www.w3.org/2000/svg";
-  const baseUrl = 'https://joalcabadesarrollo.github.io/planos-rutas-qr/';
-  const entrada = { x: 10, y: 170, width: 60, height: 60 };
-  const entradaCenter = { x: entrada.x + entrada.width / 2, y: entrada.y + entrada.height / 2 };
-  const pisos = 3;
-  const ParqueaderoesPorPiso = 10;
-  const Parqueaderoes = [];
-  let haInteraccionado = false;
+const svgNS = "http://www.w3.org/2000/svg";
+const baseUrl = 'https://joalcabadesarrollo.github.io/planos-rutas-qr/';
+const entrada = { x: 10, y: 170, width: 60, height: 60 };
+const entradaCenter = { x: entrada.x + entrada.width / 2, y: entrada.y + entrada.height / 2 };
+const pisos = 3;
+const ParqueaderoesPorPiso = 10;
+const Parqueaderoes = [];
+let haInteraccionado = false;
 
-  document.addEventListener('click', () => { haInteraccionado = true; });
-  document.addEventListener('touchstart', () => { haInteraccionado = true; });
+document.addEventListener('click', () => { haInteraccionado = true; });
 
-  for (let piso = 1; piso <= pisos; piso++) {
-    for (let i = 1; i <= ParqueaderoesPorPiso; i++) {
-      const numeroParqueadero = piso * 100 + i;
-      const fila = i <= 5 ? 50 : 250;
-      const col = ((i - 1) % 5) * 140 + 100;
+for (let piso = 1; piso <= pisos; piso++) {
+  for (let i = 1; i <= ParqueaderoesPorPiso; i++) {
+    const numeroParqueadero = piso * 100 + i;
+    const fila = i <= 5 ? 50 : 250;
+    const col = ((i - 1) % 5) * 140 + 100;
 
-      Parqueaderoes.push({
-        id: numeroParqueadero,
-        piso,
-        x: col,
-        y: fila,
-        width: 120,
-        height: 120
-      });
-    }
-  }
-
-  function createText(x, y, content, options = {}) {
-    const t = document.createElementNS(svgNS, 'text');
-    t.setAttribute('x', x);
-    t.setAttribute('y', y);
-    t.textContent = content;
-    t.setAttribute('fill', options.fill || '#000');
-    t.setAttribute('font-weight', options.fontWeight || 'bold');
-    if (options.anchor) t.setAttribute('text-anchor', options.anchor);
-    return t;
-  }
-
-  function crearLinea(x1, y1, x2, y2) {
-    const line = document.createElementNS(svgNS, 'line');
-    line.setAttribute('x1', x1);
-    line.setAttribute('y1', y1);
-    line.setAttribute('x2', x2);
-    line.setAttribute('y2', y2);
-    line.setAttribute('stroke', '#FF0000');
-    line.setAttribute('stroke-width', '3');
-    return line;
-  }
-
-  function crearFlecha(x, y, direction) {
-    const arrow = document.createElementNS(svgNS, 'path');
-    const size = 10;
-    let d = '';
-    switch (direction) {
-      case 'right': d = `M${x - size},${y - size} L${x},${y} L${x - size},${y + size}`; break;
-      case 'left':  d = `M${x + size},${y - size} L${x},${y} L${x + size},${y + size}`; break;
-      case 'up':    d = `M${x - size},${y + size} L${x},${y} L${x + size},${y + size}`; break;
-      case 'down':  d = `M${x - size},${y - size} L${x},${y} L${x + size},${y - size}`; break;
-    }
-    arrow.setAttribute('d', d);
-    arrow.setAttribute('fill', 'none');
-    arrow.setAttribute('stroke', '#007BFF');
-    arrow.setAttribute('stroke-width', '3');
-    arrow.setAttribute('stroke-linecap', 'round');
-    arrow.setAttribute('stroke-linejoin', 'round');
-    return arrow;
-  }
-
-  const contenedor = document.getElementById('contenedor-planos');
-
-  function crearPlanoParaParqueadero(idParqueadero, piso, placa) {
-    const ParqueaderoesDelPiso = Parqueaderoes.filter(h => h.piso === piso);
-    const contPlano = document.createElement('div');
-    contPlano.classList.add('plano-container');
-
-    const titulo = document.createElement('div');
-    titulo.classList.add('plano-titulo');
-    titulo.textContent = `Piso ${piso} - Ruta a Parqueadero ${idParqueadero}`;
-    contPlano.appendChild(titulo);
-
-    const svg = document.createElementNS(svgNS, 'svg');
-    svg.setAttribute('width', '900');
-    svg.setAttribute('height', '400');
-    svg.setAttribute('viewBox', '0 0 900 400');
-
-    const rectEntrada = document.createElementNS(svgNS, 'rect');
-    rectEntrada.setAttribute('x', entrada.x);
-    rectEntrada.setAttribute('y', entrada.y);
-    rectEntrada.setAttribute('width', entrada.width);
-    rectEntrada.setAttribute('height', entrada.height);
-    rectEntrada.setAttribute('fill', 'green');
-    svg.appendChild(rectEntrada);
-
-    const textoEntrada = createText(
-      entrada.x + entrada.width / 2,
-      entrada.y - 8,
-      'Entrada',
-      { fill: 'green', fontWeight: 'bold', anchor: 'middle' }
-    );
-    svg.appendChild(textoEntrada);
-
-    const ParqueaderoesGroup = document.createElementNS(svgNS, 'g');
-    svg.appendChild(ParqueaderoesGroup);
-
-    const rutasGroup = document.createElementNS(svgNS, 'g');
-    svg.appendChild(rutasGroup);
-
-    ParqueaderoesDelPiso.forEach(h => {
-      let puerta = {};
-      if (h.y < 150) {
-        puerta.x = h.x;
-        puerta.y = h.y + h.height / 2;
-      } else {
-        puerta.x = h.x + h.width;
-        puerta.y = h.y + h.height / 2;
-      }
-
-      const rect = document.createElementNS(svgNS, 'rect');
-      rect.setAttribute('x', h.x);
-      rect.setAttribute('y', h.y);
-      rect.setAttribute('width', h.width);
-      rect.setAttribute('height', h.height);
-      rect.setAttribute('class', 'Parqueadero');
-      ParqueaderoesGroup.appendChild(rect);
-
-      const texto = createText(
-        h.x + h.width / 2,
-        h.y - 5,
-        `Parqueadero ${h.id}`,
-        { anchor: 'middle' }
-      );
-      ParqueaderoesGroup.appendChild(texto);
-
-      if (h.id === idParqueadero && placa) {
-        const textoPlaca = createText(
-          h.x + h.width / 2,
-          h.y + h.height + 18,
-          `Placa: ${placa}`,
-          { anchor: 'middle', fill: '#555' }
-        );
-        ParqueaderoesGroup.appendChild(textoPlaca);
-      }
-
-      if (h.id === idParqueadero) {
-        const tramo1 = crearLinea(entradaCenter.x + 10, entradaCenter.y, puerta.x, entradaCenter.y);
-        const tramo2 = crearLinea(puerta.x, entradaCenter.y, puerta.x, puerta.y);
-        rutasGroup.appendChild(tramo1);
-        rutasGroup.appendChild(tramo2);
-
-        const direccionFlecha = puerta.y < entradaCenter.y ? 'up' :
-                                puerta.y > entradaCenter.y ? 'down' :
-                                puerta.x < entradaCenter.x ? 'left' : 'right';
-        const flecha = crearFlecha(puerta.x, puerta.y, direccionFlecha);
-        rutasGroup.appendChild(flecha);
-
-        const path = document.createElementNS(svgNS, 'path');
-        path.setAttribute('d', `M${entradaCenter.x + 10},${entradaCenter.y} L${puerta.x},${entradaCenter.y} L${puerta.x},${puerta.y}`);
-        path.setAttribute('fill', 'none');
-        path.setAttribute('id', `ruta-persona-${h.id}`);
-        path.style.visibility = 'hidden';
-        rutasGroup.appendChild(path);
-
-        const personaImg = document.createElementNS(svgNS, 'image');
-        personaImg.setAttribute('width', 24);
-        personaImg.setAttribute('height', 24);
-        personaImg.setAttributeNS('http://www.w3.org/1999/xlink', 'href', 'https://cdn-icons-png.flaticon.com/512/847/847969.png');
-        personaImg.setAttribute('class', 'usuario-animado');
-
-        const animateMotion = document.createElementNS(svgNS, 'animateMotion');
-        animateMotion.setAttribute('dur', '4s');
-        animateMotion.setAttribute('repeatCount', 'indefinite');
-
-        const mpath = document.createElementNS(svgNS, 'mpath');
-        mpath.setAttributeNS('http://www.w3.org/1999/xlink', 'href', `#ruta-persona-${h.id}`);
-        animateMotion.appendChild(mpath);
-        personaImg.appendChild(animateMotion);
-        rutasGroup.appendChild(personaImg);
-
-        const urlPlano = `${baseUrl}?hab=${h.id}&placa=${encodeURIComponent(placa || '')}`;
-        const centro = { x: h.x + h.width / 2, y: h.y + h.height / 2 };
-
-        const canvas = document.createElement('canvas');
-        QRCode.toCanvas(canvas, urlPlano, { width: 80, margin: 1 }, function (error) {
-          if (error) console.error(error);
-
-          const qrBorder = document.createElementNS(svgNS, 'rect');
-          qrBorder.setAttribute('x', centro.x - 42);
-          qrBorder.setAttribute('y', centro.y - 42);
-          qrBorder.setAttribute('width', 84);
-          qrBorder.setAttribute('height', 84);
-          qrBorder.setAttribute('class', 'qr-border');
-          ParqueaderoesGroup.appendChild(qrBorder);
-
-          const img = document.createElementNS(svgNS, 'image');
-          img.setAttributeNS(null, 'width', 80);
-          img.setAttributeNS(null, 'height', 80);
-          img.setAttributeNS(null, 'x', centro.x - 40);
-          img.setAttributeNS(null, 'y', centro.y - 40);
-          img.setAttributeNS('http://www.w3.org/1999/xlink', 'href', canvas.toDataURL());
-          img.setAttribute('class', 'qr-image');
-          ParqueaderoesGroup.appendChild(img);
-        });
-
-        const descripcionAudio = `Te encuentras en el piso ${piso}. La ruta va desde la entrada hasta el Parqueadero ${idParqueadero}. La placa del vehículo es ${placa || 'desconocida'}. Sigue la flecha roja para llegar.`;
-        setTimeout(() => hablar(descripcionAudio), 500);
-      }
+    Parqueaderoes.push({
+      id: numeroParqueadero,
+      piso,
+      x: col,
+      y: fila,
+      width: 120,
+      height: 120
     });
-
-    contPlano.appendChild(svg);
-
-    const botones = document.createElement('div');
-    botones.className = 'plano-botones';
-
-    const btnImprimir = document.createElement('button');
-    btnImprimir.textContent = '🖨️ Imprimir';
-    btnImprimir.onclick = () => {
-      const printWindow = window.open('', '', 'width=960,height=600');
-      printWindow.document.write('<html><head><title>Imprimir Plano</title>');
-      printWindow.document.write('<style>body{margin:0;}svg{width:100%;}</style>');
-      printWindow.document.write('</head><body>');
-      printWindow.document.write(svg.outerHTML);
-      printWindow.document.write('</body></html>');
-      printWindow.document.close();
-      printWindow.focus();
-      setTimeout(() => printWindow.print(), 500);
-    };
-
-    const btnCompartir = document.createElement('button');
-    btnCompartir.textContent = '🔗 Compartir';
-    btnCompartir.onclick = async () => {
-      const url = `${baseUrl}?hab=${idParqueadero}&placa=${encodeURIComponent(placa || '')}`;
-      try {
-        await navigator.clipboard.writeText(url);
-        alert(`Enlace copiado al portapapeles:\n${url}`);
-      } catch (err) {
-        alert('No se pudo copiar el enlace. Inténtalo manualmente.');
-      }
-    };
-
-    const btnAudio = document.createElement('button');
-    btnAudio.textContent = '🔊 Escuchar ruta';
-    btnAudio.onclick = () => {
-      const descripcionAudio = `Te encuentras en el piso ${piso}. La ruta va desde la entrada hasta el Parqueadero ${idParqueadero}. La placa del vehículo es ${placa || 'desconocida'}. Sigue la flecha roja para llegar.`;
-      hablar(descripcionAudio, true); // forzado
-    };
-
-    botones.appendChild(btnImprimir);
-    botones.appendChild(btnCompartir);
-    botones.appendChild(btnAudio);
-    contPlano.appendChild(botones);
-
-    return contPlano;
   }
+}
 
-  function hablar(texto, forzado = false) {
-    if (!('speechSynthesis' in window)) return;
-    if (!haInteraccionado && !forzado) return;
+function createText(x, y, content) {
+  const t = document.createElementNS(svgNS, 'text');
+  t.setAttribute('x', x);
+  t.setAttribute('y', y);
+  t.textContent = content;
+  t.setAttribute('text-anchor', 'middle');
+  return t;
+}
 
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(texto);
-    utterance.lang = 'es-ES';
-    utterance.rate = 1;
-    utterance.pitch = 1;
-    window.speechSynthesis.speak(utterance);
-  }
+function crearLinea(x1, y1, x2, y2) {
+  const line = document.createElementNS(svgNS, 'line');
+  line.setAttribute('x1', x1);
+  line.setAttribute('y1', y1);
+  line.setAttribute('x2', x2);
+  line.setAttribute('y2', y2);
+  line.setAttribute('stroke', '#FF0000');
+  line.setAttribute('stroke-width', '3');
+  return line;
+}
 
-  const params = new URLSearchParams(window.location.search);
-  const habParam = parseInt(params.get('hab'), 10);
-  const placaParam = params.get('placa') || '';
+const contenedor = document.getElementById('contenedor-planos');
 
-  if (!isNaN(habParam)) {
-    const piso = Math.floor(habParam / 100);
-    const plano = crearPlanoParaParqueadero(habParam, piso, placaParam);
-    contenedor.appendChild(plano);
-  } else {
-    for (let piso = 1; piso <= pisos; piso++) {
-      const ParqueaderoesDelPiso = Parqueaderoes.filter(h => h.piso === piso);
-      ParqueaderoesDelPiso.forEach(hab => {
-        const plano = crearPlanoParaParqueadero(hab.id, piso, '');
-        contenedor.appendChild(plano);
-      });
+function crearPlanoParaParqueadero(idParqueadero, piso, placa) {
+  const contPlano = document.createElement('div');
+  contPlano.classList.add('plano-container');
+
+  const titulo = document.createElement('div');
+  titulo.classList.add('plano-titulo');
+  titulo.textContent = `Piso ${piso} - Parqueadero ${idParqueadero}`;
+  contPlano.appendChild(titulo);
+
+  const svg = document.createElementNS(svgNS, 'svg');
+  svg.setAttribute('viewBox', '0 0 900 400');
+
+  const rectEntrada = document.createElementNS(svgNS, 'rect');
+  rectEntrada.setAttribute('x', entrada.x);
+  rectEntrada.setAttribute('y', entrada.y);
+  rectEntrada.setAttribute('width', entrada.width);
+  rectEntrada.setAttribute('height', entrada.height);
+  rectEntrada.setAttribute('fill', 'green');
+  svg.appendChild(rectEntrada);
+
+  Parqueaderoes.filter(h => h.piso === piso).forEach(h => {
+    const rect = document.createElementNS(svgNS, 'rect');
+    rect.setAttribute('x', h.x);
+    rect.setAttribute('y', h.y);
+    rect.setAttribute('width', h.width);
+    rect.setAttribute('height', h.height);
+    rect.setAttribute('class', 'Parqueadero');
+    svg.appendChild(rect);
+
+    const texto = createText(h.x + 60, h.y - 5, h.id);
+    svg.appendChild(texto);
+
+    if (h.id === idParqueadero && placa) {
+      const textoPlaca = createText(h.x + 60, h.y + 140, `Placa: ${placa}`);
+      svg.appendChild(textoPlaca);
+
+      const linea = crearLinea(entradaCenter.x, entradaCenter.y, h.x, h.y);
+      svg.appendChild(linea);
     }
+  });
+
+  contPlano.appendChild(svg);
+  return contPlano;
+}
+
+// 🔥 AQUÍ ESTÁ LA INTEGRACIÓN
+const params = new URLSearchParams(window.location.search);
+const habParam = parseInt(params.get('hab'), 10);
+let placaParam = params.get('placa') || '';
+
+// 👉 Solicitar placa si no viene en la URL
+if (!placaParam) {
+  placaParam = prompt('Por favor ingresa la placa de tu vehículo:') || '';
+}
+
+if (!isNaN(habParam)) {
+  const piso = Math.floor(habParam / 100);
+  contenedor.appendChild(crearPlanoParaParqueadero(habParam, piso, placaParam));
+} else {
+  for (let piso = 1; piso <= pisos; piso++) {
+    Parqueaderoes.filter(h => h.piso === piso).forEach(h => {
+      contenedor.appendChild(crearPlanoParaParqueadero(h.id, piso, placaParam));
+    });
   }
+}
 </script>
 
 </body>
